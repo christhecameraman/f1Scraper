@@ -10,7 +10,6 @@ import logging
 import os.path
 import ConfigParser
 
-
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)-8s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
@@ -32,6 +31,7 @@ if (not os.path.isfile('f1Scraper.cfg')):
 else:
 	logging.info('Config File Found. Starting From Last Successful Download')
 
+#Open config file
 config = ConfigParser.RawConfigParser()
 config.read('f1Scraper.cfg')
 
@@ -49,31 +49,30 @@ lastRace = config.getint('LastFile', 'racecount')
 starturl = "http://statsf1.free.fr/photos/gp/" 
 endurl = "a.jpg"
 
-
-
-
-
 #count strikes for unsuccessful cases
 raceStrike = 0
 yearStrike = 0
 
+#counts number of new images downloaded
 newImages = 0
 
+#Start looping
 while (True):
+	writeFile = "s" + str(year) + "e" + '%02d' % racecount + ".jpg"
 	#Download image to this directory in the format s<year>e<racecount>.jpg
-	urllib.urlretrieve(starturl + str(year) + "/" + str(gpNum) + endurl, "s" + str(year) + "e" + '%02d' % racecount + ".jpg")
+	urllib.urlretrieve(starturl + str(year) + "/" + str(gpNum) + endurl, writeFile)
 	
 	#Open file and save first line, close file
-	infile = open("s" + str(year) + "e" + '%02d' % racecount + ".jpg", 'r')
+	infile = open(writeFile, 'r')
 	first_line = infile.readline()
 	infile.close()
 	
 	#Check file to see if it is a html
 	if (first_line[:14] == "<!DOCTYPE html"):
 		#Delete html file
-		os.remove("s" + str(year) + "e" + '%02d' % racecount + ".jpg")
+		os.remove(writeFile)
 		#Log result
-		logging.warning(str(gpNum) + " " + "s" + str(year) + "e" + '%02d' % racecount + ".jpg" + " Does Not Exist")
+		logging.warning(str(gpNum) + " " + writeFile + " Does Not Exist")
 		#Try next three races in same year
 		if (raceStrike < 2):
 			gpNum += 1
@@ -92,7 +91,7 @@ while (True):
 		#Jump back to loop unsuccessful case
 		continue
 	#log successful case
-	logging.info(str(gpNum) + " " + "s" + str(year) + "e" + '%02d' % racecount + ".jpg" + " Has been downloaded")
+	logging.info(str(gpNum) + " " + writeFile + " Has been downloaded")
 	#Update iteartors, successful values and strikes
 	raceStrike = 0
 	yearStrike = 0
@@ -104,6 +103,7 @@ while (True):
 	newImages += 1
 	#End loop successful case
 logging.info(str(newImages) + ' New Images Added')
+#Update config for next run of file
 config.set('LastFile', 'gpNum', str(lastGPNum))
 config.set('LastFile', 'year', str(lastYear))
 config.set('LastFile', 'racecount', str(lastRace))
